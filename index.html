@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<title>Shift Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-column phone app, sticky header, fixed bottom tab bar; hi-vis floor-marking yellow as the single accent */
+:root{
+  --bg:#F1F3EF; --surface:#FFFFFF; --sunk:#E7EAE5; --fg:#1B1F1D; --muted:#5C655F; --line:#D3D8D1;
+  --accent:#F2C200; --accent-ink:#1B1F1D; --good:#1D7A4B; --bad:#B3261E;
+  --t1:#2F6FD6; --t2:#D9542B; --t3:#2E9E62; --t4:#8A4FD1; --t5:#C2368A; --t6:#1E9AAE; --t7:#B07A12; --t8:#5E6B78;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131615; --surface:#1D211F; --sunk:#262B28; --fg:#ECEFEA; --muted:#9AA39D; --line:#343B37;
+  --accent:#F5C400; --accent-ink:#151816; --good:#4CC38A; --bad:#F2836B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131615; --surface:#1D211F; --sunk:#262B28; --fg:#ECEFEA; --muted:#9AA39D; --line:#343B37;
+  --accent:#F5C400; --accent-ink:#151816; --good:#4CC38A; --bad:#F2836B; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:12px}
+header h1{margin:0;white-space:nowrap;font-family:var(--display);font-size:22px;letter-spacing:.02em;text-transform:uppercase;flex:1}
+header h1 span{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:0 6px;margin-right:6px}
+.iconbtn{background:none;border:1px solid var(--line);color:var(--fg);border-radius:8px;height:38px;padding:0 12px;font:600 14px var(--body)}
+main{padding-block:16px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:720px;margin:0 auto}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav button{background:none;border:0;color:var(--muted);font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:14px 2px;border-top:4px solid transparent}
+nav button[aria-current="page"]{color:var(--fg);border-top-color:var(--accent)}
+h2{font-family:var(--display);font-size:26px;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 16px;font-size:15px}
+.sec{font:700 13px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);flex:1;min-width:0}
+input,select,textarea{font:500 17px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:44px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+input.num{font-family:var(--display);font-size:20px;text-align:center;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;min-height:46px;padding:0 16px;font:700 16px var(--display);letter-spacing:.04em;text-transform:uppercase}
+.btn.ghost{background:none;color:var(--fg);border:1px solid var(--line)}
+.btn.warn{background:none;color:var(--bad);border:1px solid var(--bad)}
+.btn.warn.armed{background:var(--bad);color:var(--surface)}
+.btn:disabled{opacity:.4}
+.x{background:none;border:0;color:var(--muted);font-size:22px;width:40px;height:40px;flex:none}
+.grid3{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr));gap:8px;align-items:center}
+.out{font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums;text-align:center}
+.pill{display:inline-block;font:700 13px var(--display);letter-spacing:.05em;padding:2px 8px;border-radius:99px;background:var(--sunk);color:var(--muted)}
+.pill.good{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.area{display:grid;grid-template-columns:minmax(0,1fr) 76px 76px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.area:last-child{border-bottom:0}
+.area .name{font-weight:600;min-width:0}
+.area .meta{grid-column:1/-1;display:flex;gap:10px;align-items:center;font-size:14px;color:var(--muted)}
+.bar{height:6px;background:var(--sunk);border-radius:3px;flex:1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.colhead{display:grid;grid-template-columns:minmax(0,1fr) 76px 76px;gap:8px;font:700 12px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.colhead span:first-child{text-align:left}
+.big{display:flex;gap:10px}
+.big .card{flex:1;text-align:center}
+.big b{display:block;font:700 30px var(--display);font-variant-numeric:tabular-nums}
+.big small{color:var(--muted);font-size:13px}
+.role h3{margin:0 0 8px;font:700 17px var(--display);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.role .lbl{font-size:14px;color:var(--muted)}
+.pmrow{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.pmrow:last-child{border-bottom:0}
+.pmrow .calc{background:var(--sunk);border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:center}
+pre.email{white-space:pre-wrap;word-break:break-word;font:15px/1.5 var(--body);background:var(--sunk);border-radius:8px;padding:12px;margin:0}
+.hawb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hawb .wide{grid-column:1/-1}
+.tk{border-left:8px solid var(--tk,var(--line))}
+.tkb{display:inline-block;background:var(--tk);color:#fff;font:700 15px var(--display);letter-spacing:.04em;padding:3px 10px;border-radius:6px;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.tkline{font-size:13px;color:var(--muted);margin:-2px 0 8px;display:flex;gap:8px;align-items:center}
+.hawb-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.hawb-head input{font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20}
+.note{font-size:14px;color:var(--muted)}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center}
+.empty p{color:var(--muted)}
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+.dayhead .d{font:700 30px var(--display)}
+.dayhead .w{color:var(--muted);font:600 16px var(--display);text-transform:uppercase;letter-spacing:.08em}
+.daynav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+canvas#cell{width:100%;display:block;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.calwrap{position:relative;max-width:100%;touch-action:manipulation}
+.calwrap img{display:block;width:100%;border-radius:6px;user-select:none;-webkit-user-select:none}
+.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border:3px solid var(--bad);border-radius:50%;pointer-events:none;background:color-mix(in srgb,var(--bad) 25%,transparent)}
+.hl{position:absolute;border:3px solid var(--bad);pointer-events:none;border-radius:3px}
+.gridline{position:absolute;border:1px dashed var(--bad);pointer-events:none;opacity:.6}
+.copyfallback{width:100%;min-height:140px;margin-top:8px;font-size:14px}
+@media (prefers-reduced-motion: no-preference){nav button{transition:color .15s}}
+</style>
+
+<header>
+  <h1><span>Shift</span>Board</h1>
+  <span id="saveState" class="pill">…</span>
+  <button class="iconbtn" id="setBtn" aria-label="Settings">Settings</button>
+</header>
+<main id="view"></main>
+<nav id="tabs">
+  <button data-tab="safety">Safety</button>
+  <button data-tab="morning">Morning</button>
+  <button data-tab="heads">Heads</button>
+  <button data-tab="pm">4 PM</button>
+  <button data-tab="eod">EOD</button>
+</nav>
+<input type="file" id="calFile" accept="image/*" hidden>
+
+<script>
+(function(){
+"use strict";
+const KEY="shiftboard:v1";
+const ROLES=["Pickers","Receiving & Put-a-way","Inventory Control","Processors","Loaders","DTS","CSR (Transportation) / Floor Lead","Material Handlers","QC","STO Staff","CSD","RMA"];
+const PM=[
+ {k:"total",l:"Total pallets on load plan",calc:1},{k:"trucks",l:"Total Trucks Scheduled"},{k:"delayed",l:"Delayed Truck arrival"},
+ {k:"hhp",l:"HHP"},{k:"acc",l:"ACC"},{k:"shipped",l:"Total Shipped"},{k:"ready",l:"Ready to ship"},{k:"inproc",l:"In-process"},{k:"toprint",l:"Total to be printed"},{k:"manual",l:"Total manual"},
+ {h:"eCOM STO"},{k:"e_aged",l:"Aged"},{k:"e_prog",l:"In progress"},{k:"e_ship",l:"Total Shipped"},{k:"e_print",l:"Total to be Printed"},
+ {h:"Special Projects"},{k:"s_prog",l:"In progress"},{k:"s_ship",l:"Total Shipped"},{k:"s_print",l:"Total to be printed"},
+ {h:"Inbound"},{k:"i_pack",l:"Packaging Anticipated"},{k:"i_air",l:"Airport Anticipated"},{k:"i_del",l:"Total Delivered"},{k:"i_gr",l:"Total GR'd"},{k:"i_pa",l:"Total Put Away"},{k:"i_pend",l:"Total Pending GR",calc:1},
+ {h:"Previous Day's Inbound"},{k:"p_air",l:"Airport Anticipated"},{k:"p_del",l:"Total Delivered"},{k:"p_gr",l:"Total GR'd"},{k:"p_pa",l:"Total Putaway"},{k:"p_pend",l:"Total Pending GR"},
+ {h:"CSD · D23"},{k:"d23_sto",l:"STO Inbound"},{k:"d23_onh",l:"Apkudo Inbound On-Hand"},{k:"d23_proj",l:"Projected to received (pcs)"},{k:"d23_out",l:"Apkudo Outbound (pcs)"},{k:"d23_enr",l:"ENR Orders (pcs)"},
+ {h:"CSD · D24"},{k:"d24_in",l:"Inbound"},{k:"d24_out",l:"Outbound"},
+ {h:"CSD · DOA"},{k:"doa_in",l:"Package Inbound (pcs)"},{k:"doa_out",l:"Outbound (pcs)"},
+ {h:"DTS"},{k:"ups",l:"UPS Units"},{k:"bestbuy",l:"Best Buy"},{k:"walmart",l:"Walmart units"},
+ {h:"RMA"},{k:"rma_tot",l:"Total RMAs"},{k:"rma_df",l:"DF Team RMA Submission"},{k:"rma_sea",l:"SEA LPS – Pending RDO"},{k:"rma_3pl",l:"W/H 3PL- Pending Receipt"}
+];
+const DEF={tab:"safety",carriers:["Challenger","Werner","Covenant","Schneider","UPS"],
+ areas:["Wall","eComm","Special Projects","CE Coppell","KWI","Inbound – Challenger","Container – Werner","Container – Challenger","Container – Covenant","Container – Schneider","UPS"],
+ morning:{},head:{},pm:{},eod:{date:"",trucks:[{c:"",cont:false,t:""}],hawbs:[],put:"",expA:"",expC:""},cal:null};
+
+let S=load(), storageOK=true;
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return Object.assign(JSON.parse(JSON.stringify(DEF)),o);}}catch(e){storageOK=false}return JSON.parse(JSON.stringify(DEF));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}setSaveState()}
+function setSaveState(){const el=document.getElementById("saveState");el.textContent=storageOK?"Saved":"Not saving";el.className="pill "+(storageOK?"good":"bad")}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const n=v=>{const x=parseFloat(v);return isNaN(x)?0:x};
+const has=v=>v!==""&&v!=null;
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+function parseTime(v){v=String(v||"").trim();if(!v)return "";let h,m;
+  if(v.includes(":")){[h,m]=v.split(":").map(Number)}else{const d=v.replace(/\D/g,"");if(!d)return "";const x=parseInt(d,10);h=Math.floor(x/100);m=x%100}
+  if(isNaN(h)||isNaN(m)||h>23||m>59)return "?";return h+":"+String(m).padStart(2,"0")}
+function copyText(text,btn){
+  const done=()=>toast("Copied");
+  const fallback=()=>{let ta=btn.parentElement.querySelector(".copyfallback");if(!ta){ta=document.createElement("textarea");ta.className="copyfallback";btn.parentElement.appendChild(ta)}ta.value=text;ta.focus();ta.select();toast("Text selected. Tap Copy in the menu.")};
+  try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}}
+function armClear(btn,fn){if(btn.classList.contains("armed")){fn();return}btn.classList.add("armed");const old=btn.textContent;btn.textContent="Tap again to clear";setTimeout(()=>{btn.classList.remove("armed");btn.textContent=old},3000)}
+
+/* ---------- tabs ---------- */
+function go(tab){S.tab=tab;save();document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===tab?"page":"false"));render();window.scrollTo(0,0)}
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)go(b.dataset.tab)});
+$("#setBtn").addEventListener("click",()=>go("settings"));
+function render(){const v=$("#view");({safety:renderSafety,morning:renderMorning,heads:renderHeads,pm:renderPM,eod:renderEOD,settings:renderSettings}[S.tab]||renderSafety)(v)}
+
+/* ---------- SAFETY ---------- */
+let calImg=null, calURL=null, calStep=0, calPts=[], curDay=null, showFull=false;
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open("shiftboard",1);r.onupgradeneeded=()=>r.result.createObjectStore("files");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function idbPut(k,v){try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction("files","readwrite");tx.objectStore("files").put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});return true}catch(e){return false}}
+async function idbGet(k){try{const db=await idb();return await new Promise((res,rej)=>{const r=db.transaction("files").objectStore("files").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}catch(e){return null}}
+function loadImage(url){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url})}
+function monthInfo(y,m){const first=new Date(y,m,1).getDay();const days=new Date(y,m+1,0).getDate();return{first,days,rows:Math.ceil((first+days)/7)}}
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+$("#calFile").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const raw=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
+  let img; try{img=await loadImage(raw)}catch(err){toast("That file couldn't be opened as an image");return}
+  const max=2600, sc=Math.min(1,max/Math.max(img.width,img.height));
+  const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  calURL=c.toDataURL("image/jpeg",0.9);calImg=await loadImage(calURL);
+  const ok=await idbPut("cal",calURL);
+  if(!ok)toast("Calendar loaded, but it won't be remembered after you close the page");
+  const now=new Date();S.cal={y:now.getFullYear(),m:now.getMonth(),pts:null};save();
+  calStep=1;calPts=[];e.target.value="";render();
+});
+
+function renderSafety(v){
+  if(!calImg){
+    v.innerHTML=`<h2>Today's safety topic</h2><p class="sub">Upload this month's safety calendar once. The app zooms into each day's box so you can read it at the start-up meeting.</p>
+    <div class="empty"><p>No calendar yet. A straight-on screenshot or PDF export works best. Angled photos make the boxes harder to line up.</p>
+    <button class="btn" id="upl">Upload calendar image</button></div>
+    <p class="note" style="margin-top:14px">The image stays on this phone. It is not sent anywhere.</p>`;
+    $("#upl").onclick=()=>$("#calFile").click();return;
+  }
+  if(calStep>0||!S.cal||!S.cal.pts){return renderCalibrate(v)}
+  const {y,m,pts}=S.cal, info=monthInfo(y,m);
+  if(!curDay){const t=new Date();curDay=(t.getFullYear()===y&&t.getMonth()===m)?t.getDate():1}
+  const date=new Date(y,m,curDay), wd=date.toLocaleDateString(undefined,{weekday:"long"});
+  const isToday=(()=>{const t=new Date();return t.getFullYear()===y&&t.getMonth()===m&&t.getDate()===curDay})();
+  v.innerHTML=`<div class="dayhead"><div><div class="w">${esc(wd)}${isToday?' · <span class="pill good">Today</span>':""}</div><div class="d">${MONTHS[m]} ${curDay}</div></div></div>
+   <canvas id="cell" aria-label="Safety topic for ${MONTHS[m]} ${curDay}"></canvas>
+   <div class="daynav"><button class="btn ghost" id="prev" ${curDay<=1?"disabled":""}>◀ Prev</button><button class="btn ghost" id="today">Today</button><button class="btn ghost" id="next" ${curDay>=info.days?"disabled":""}>Next ▶</button></div>
+   <div class="row" style="margin-top:16px"><button class="btn ghost" id="full">${showFull?"Hide":"Show"} full calendar</button></div>
+   <div id="fullwrap" ${showFull?"":"hidden"} style="margin-top:12px"><div class="calwrap" id="cw"><img src="${calURL}" alt="Full safety calendar"></div></div>
+   <div class="sec">Calendar</div>
+   <div class="row"><button class="btn ghost" id="realign">Re-align boxes</button><button class="btn ghost" id="replace">New month's calendar</button></div>`;
+  drawCell(pts,info,y,m);
+  const cw=$("#cw");const r=cellRect(pts,info,curDay);const hl=document.createElement("div");hl.className="hl";
+  Object.assign(hl.style,{left:r.x*100+"%",top:r.y*100+"%",width:r.w*100+"%",height:r.h*100+"%"});cw.appendChild(hl);
+  $("#prev").onclick=()=>{curDay=Math.max(1,curDay-1);render()};
+  $("#next").onclick=()=>{curDay=Math.min(info.days,curDay+1);render()};
+  $("#today").onclick=()=>{const t=new Date();curDay=(t.getFullYear()===y&&t.getMonth()===m)?t.getDate():1;if(!(t.getFullYear()===y&&t.getMonth()===m))toast(`This calendar is for ${MONTHS[m]} ${y}`);render()};
+  $("#full").onclick=()=>{showFull=!showFull;render()};
+  $("#realign").onclick=()=>{calStep=1;calPts=[];render()};
+  $("#replace").onclick=()=>$("#calFile").click();
+}
+function cellRect(pts,info,day){const [a,b]=pts;const cw=(b.x-a.x)/7,ch=(b.y-a.y)/info.rows;const idx=info.first+day-1;
+  return{x:a.x+(idx%7)*cw,y:a.y+Math.floor(idx/7)*ch,w:cw,h:ch}}
+function drawCell(pts,info){
+  const cv=$("#cell");if(!cv)return;const r=cellRect(pts,info,curDay);
+  /* calendar text often spills past its box, so include a slice of the next box on the right */
+  const sx=Math.max(0,(r.x-r.w*0.02)*calImg.width), sy=r.y*calImg.height;
+  const sw=Math.min(calImg.width-sx,r.w*1.3*calImg.width), sh=r.h*calImg.height;
+  const cssW=cv.clientWidth||340, dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(cssW*dpr);cv.height=Math.round(cssW*dpr*(sh/sw));cv.style.height=(cssW*sh/sw)+"px";
+  const ctx=cv.getContext("2d");ctx.imageSmoothingQuality="high";ctx.fillStyle="#fff";ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.drawImage(calImg,sx,sy,sw,sh,0,0,cv.width,cv.height);
+}
+function renderCalibrate(v){
+  const now=new Date();const y=S.cal?S.cal.y:now.getFullYear(),m=S.cal?S.cal.m:now.getMonth();
+  const step=calPts.length===0?`<b>Step 1 of 2.</b> Tap the <b>top-left corner</b> of the first week's <b>Sunday</b> box (the top-left of the grid, just under the day names).`
+    :`<b>Step 2 of 2.</b> Tap the <b>bottom-right corner</b> of the last week's <b>Saturday</b> box (the bottom-right of the grid).`;
+  const yrs=[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1];
+  v.innerHTML=`<h2>Line up the calendar</h2><p class="sub">Two taps tell the app where the day boxes are. You only do this once per month.</p>
+   <div class="row" style="margin-bottom:12px"><label class="f">Month<select id="cm">${MONTHS.map((x,i)=>`<option value="${i}" ${i===m?"selected":""}>${x}</option>`).join("")}</select></label>
+   <label class="f">Year<select id="cy">${yrs.map(x=>`<option ${x===y?"selected":""}>${x}</option>`).join("")}</select></label></div>
+   <div class="card" style="margin-bottom:12px">${step}</div>
+   <div class="calwrap" id="cw"><img src="${calURL}" alt="Safety calendar" draggable="false"></div>
+   <div class="row" style="margin-top:12px"><button class="btn ghost" id="redo">Start over</button>${S.cal&&S.cal.pts?'<button class="btn ghost" id="cancel">Cancel</button>':""}</div>`;
+  const cw=$("#cw");
+  calPts.forEach(p=>{const d=document.createElement("div");d.className="mark";d.style.left=p.x*100+"%";d.style.top=p.y*100+"%";cw.appendChild(d)});
+  $("#cm").onchange=e=>{S.cal=S.cal||{};S.cal.m=+e.target.value;S.cal.y=+$("#cy").value;save()};
+  $("#cy").onchange=e=>{S.cal=S.cal||{};S.cal.y=+e.target.value;S.cal.m=+$("#cm").value;save()};
+  $("#redo").onclick=()=>{calPts=[];render()};
+  if($("#cancel"))$("#cancel").onclick=()=>{calStep=0;calPts=[];render()};
+  cw.addEventListener("click",e=>{
+    const r=cw.getBoundingClientRect();const p={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
+    calPts.push(p);
+    if(calPts.length===2){
+      const [a,b]=calPts;if(b.x<=a.x||b.y<=a.y){toast("Second tap must be below and right of the first");calPts=[];render();return}
+      S.cal={y:+$("#cy").value,m:+$("#cm").value,pts:calPts.slice()};save();calStep=0;calPts=[];curDay=null;toast("Calendar lined up");
+    }
+    render();
+  });
+}
+window.addEventListener("resize",()=>{if(S.tab==="safety"&&calImg&&S.cal&&S.cal.pts&&!calStep)drawCell(S.cal.pts,monthInfo(S.cal.y,S.cal.m))});
+
+/* ---------- MORNING ---------- */
+function renderMorning(v){
+  v.innerHTML=`<h2>Morning check-in</h2><p class="sub">Enter Planned and Done as you walk the Wall and meet the supervisors. Remaining figures itself out.</p>
+   <div class="big" id="mTot"></div>
+   <div class="sec">Areas</div>
+   <div class="card"><div class="colhead"><span>Area</span><span>Planned</span><span>Done</span></div>
+   ${S.areas.map((a,i)=>{const d=S.morning[i]||{};return `<div class="area"><div class="name">${esc(a)}</div>
+     <input class="num" inputmode="numeric" data-m="${i}" data-f="p" value="${esc(d.p??"")}" aria-label="${esc(a)} planned">
+     <input class="num" inputmode="numeric" data-m="${i}" data-f="d" value="${esc(d.d??"")}" aria-label="${esc(a)} done">
+     <div class="meta" id="mm${i}"></div></div>`}).join("")}</div>
+   <p class="note">Change the area list in Settings.</p>
+   <div class="row" style="margin-top:12px"><button class="btn warn" id="mclr">Clear morning</button></div>`;
+  v.querySelectorAll("input[data-m]").forEach(inp=>inp.addEventListener("input",e=>{const i=e.target.dataset.m;S.morning[i]=S.morning[i]||{};S.morning[i][e.target.dataset.f]=e.target.value;save();updMorning()}));
+  $("#mclr").onclick=e=>armClear(e.target,()=>{S.morning={};save();render();toast("Morning cleared")});
+  updMorning();
+}
+function updMorning(){let P=0,D=0;
+  S.areas.forEach((a,i)=>{const d=S.morning[i]||{};const el=document.getElementById("mm"+i);if(!el)return;
+    if(!has(d.p)){el.innerHTML="";return}
+    const p=n(d.p),dn=n(d.d),rem=p-dn,pct=p?Math.round(dn/p*100):0;P+=p;D+=dn;
+    el.innerHTML=`<span class="pill ${rem<=0?"good":""}">${rem<=0?"Done":rem+" remaining"}</span><span class="bar"><i style="width:${Math.min(100,Math.max(0,pct))}%"></i></span><span>${pct}%</span>`});
+  $("#mTot").innerHTML=`<div class="card"><b>${P}</b><small>Planned</small></div><div class="card"><b>${D}</b><small>Done</small></div><div class="card"><b>${P-D}</b><small>Remaining</small></div>`}
+
+/* ---------- HEAD COUNT ---------- */
+function renderHeads(v){
+  v.innerHTML=`<h2>Head count</h2><p class="sub">Same roles as the company sheet. Fill in Staff and New Starts for each role. Totals and attendance calculate themselves.</p>
+   <div class="big" id="hTot"></div>
+   <div class="sec">By role</div><div class="stack">
+   ${ROLES.map((r,i)=>{const d=S.head[r]||{};return `<div class="card role"><h3><span>${esc(r)}</span><span id="ha${i}" class="pill"></span></h3>
+     <div class="grid3"><span></span><span class="lbl" style="text-align:center">Plan</span><span class="lbl" style="text-align:center">Actual</span>
+     <span class="lbl">Staff</span><input class="num" inputmode="numeric" data-h="${i}" data-f="sp" value="${esc(d.sp??"")}" aria-label="${esc(r)} staff plan"><input class="num" inputmode="numeric" data-h="${i}" data-f="sa" value="${esc(d.sa??"")}" aria-label="${esc(r)} staff actual">
+     <span class="lbl">New Starts</span><input class="num" inputmode="numeric" data-h="${i}" data-f="np" value="${esc(d.np??"")}" aria-label="${esc(r)} new starts plan"><input class="num" inputmode="numeric" data-h="${i}" data-f="na" value="${esc(d.na??"")}" aria-label="${esc(r)} new starts actual">
+     <span class="lbl">Total</span><span class="out" id="hp${i}">0</span><span class="out" id="hc${i}">0</span></div></div>`}).join("")}</div>
+   <div class="row" style="margin-top:12px"><button class="btn warn" id="hclr">Clear head count</button></div>`;
+  v.querySelectorAll("input[data-h]").forEach(inp=>inp.addEventListener("input",e=>{const r=ROLES[e.target.dataset.h];S.head[r]=S.head[r]||{};S.head[r][e.target.dataset.f]=e.target.value;save();updHeads()}));
+  $("#hclr").onclick=e=>armClear(e.target,()=>{S.head={};save();render();toast("Head count cleared")});
+  updHeads();
+}
+function att(p,a){return p?Math.round(a/p*100)+"%":"–"}
+function updHeads(){let SP=0,SA=0,NP=0,NA=0;
+  ROLES.forEach((r,i)=>{const d=S.head[r]||{};const p=n(d.sp)+n(d.np),a=n(d.sa)+n(d.na);SP+=n(d.sp);SA+=n(d.sa);NP+=n(d.np);NA+=n(d.na);
+    $("#hp"+i).textContent=p;$("#hc"+i).textContent=a;const el=$("#ha"+i);el.textContent=att(p,a);el.className="pill "+(p?(a>=p?"good":"bad"):"")});
+  const P=SP+NP,A=SA+NA;
+  $("#hTot").innerHTML=`<div class="card"><b>${P}</b><small>Plan</small></div><div class="card"><b>${A}</b><small>Actual</small></div><div class="card"><b>${att(P,A)}</b><small>Attendance</small></div>`}
+
+/* ---------- 4 PM ---------- */
+function renderPM(v){
+  let html=`<h2>4:00 PM Report</h2><p class="sub">Same rows, same order as the company sheet, so you can read straight down while you type it in. Grey rows calculate themselves.</p><div class="card">`;
+  PM.forEach(r=>{
+    if(r.h){html+=`</div><div class="sec">${esc(r.h)}</div><div class="card">`;return}
+    if(r.calc){html+=`<div class="pmrow"><span>${esc(r.l)}</span><div class="calc out" id="pc_${r.k}"></div></div>`;return}
+    html+=`<div class="pmrow"><label for="pm_${r.k}">${esc(r.l)}</label><input class="num" inputmode="numeric" id="pm_${r.k}" data-p="${r.k}" value="${esc(S.pm[r.k]??"")}"></div>`});
+  html+=`</div><div class="card" style="margin-top:14px" id="pmCheck"></div>
+   <div class="row" style="margin-top:12px"><button class="btn warn" id="pclr">Clear 4 PM</button></div>`;
+  v.innerHTML=html;
+  v.querySelectorAll("input[data-p]").forEach(inp=>inp.addEventListener("input",e=>{S.pm[e.target.dataset.p]=e.target.value;save();updPM()}));
+  $("#pclr").onclick=e=>armClear(e.target,()=>{S.pm={};save();render();toast("4 PM cleared")});
+  updPM();
+}
+function updPM(){const p=S.pm;
+  const tot=(has(p.hhp)||has(p.acc))?n(p.hhp)+n(p.acc):"";$("#pc_total").textContent=tot===""?"–":tot;
+  const pend=has(p.i_del)?n(p.i_del)-n(p.i_gr):"";$("#pc_i_pend").textContent=pend===""?"–":pend;
+  const c=$("#pmCheck");
+  if(tot===""||(!has(p.shipped)&&!has(p.ready))){c.innerHTML=`<span class="note">Check: once HHP, ACC, Shipped and Ready to ship are in, this confirms they add up.</span>`;return}
+  const diff=tot-n(p.shipped)-n(p.ready);
+  c.innerHTML=diff===0?`<span class="pill good">Adds up</span> Shipped + Ready to ship = ${tot} total pallets`:`<span class="pill bad">Off by ${diff}</span> Shipped + Ready to ship = ${n(p.shipped)+n(p.ready)}, total pallets = ${tot}`}
+
+/* ---------- EOD ---------- */
+/* local deliveries and containers from the same carrier are counted separately */
+function eodCalc(){const E=S.eod;const by={};
+  E.hawbs.forEach(h=>{const t=E.trucks[n(h.tr)-1];if(!t||!t.c||!has(h.h))return;const k=t.c+(t.cont?"|C":"");by[k]=by[k]||{d:0,g:0};by[k].d+=n(h.q);if(has(h.gr))by[k].g+=n(h.q)});
+  return by}
+const tkColor=i=>`var(--t${(i%8)+1})`;
+const tkName=(t,i)=>`Truck ${i+1}${t&&t.c?" · "+t.c:""}${t&&t.cont?" container":""}`;
+function emailText(){const E=S.eod,by=eodCalc(),L=["Hi team,",""];
+  S.carriers.forEach(c=>[["","pallets"],["|C","container pallets"]].forEach(([suf,word])=>{const x=by[c+suf];if(!x||!x.d)return;
+    L.push(x.d===x.g?`• There were ${x.d} ${word} delivered and GR'd from ${c} today.`:`• There were ${x.d} ${word} delivered and ${x.g} GR'd from ${c} today.`)}));
+  E.hawbs.forEach(h=>{if(has(h.h)&&has(h.n))L.push(`• HAWB: ${h.h} – ${h.n}`)});
+  if(has(E.put))L.push(`• We put away ${E.put} pallets.`);
+  if(has(E.expA)||has(E.expC))L.push(`• We are expecting ${n(E.expA)} pallets from ${S.carriers[0]||"Carrier 1"} and ${n(E.expC)} pallets from containers tomorrow.`);
+  L.push("","Thank you,");return L.join("\n")}
+function spRows(){const E=S.eod;let d="";if(E.date){const [y,m,dd]=E.date.split("-");d=`${+m}/${+dd}/${y}`}
+  const out=[[d,"","","","","",""].join("\t")];
+  E.hawbs.forEach(h=>{if(!has(h.h))return;const t=E.trucks[n(h.tr)-1]||{};const gr=parseTime(h.gr),tt=parseTime(t.t);
+    out.push([t.cont?"Container":"",h.h,h.q||"",tt==="?"?"":tt,gr==="?"?"":gr,h.rb||"",h.n||""].join("\t"))});
+  return out.join("\n")}
+let lastContainer=null;
+function parseContainer(text){
+  const lines=String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const isCont=t=>/^[A-Z]{3}[UJZ]\d{7}$/.test(t);
+  const isHouse=t=>/^[A-Z]{4,}\d{5,}$/.test(t)&&!isCont(t);
+  const tokens=[];lines.forEach(l=>l.split(/\t|\s{2,}/).forEach(t=>{t=t.trim();if(t)tokens.push(t)}));
+  /* Each IB DO line (a number starting with 60) is one pallet. It belongs to the next Master/House No. after it.
+     If a sheet has no 60 numbers, fall back to counting how often each Master/House No. appears. */
+  const isDO=t=>/^60\d{6,}$/.test(t);
+  const counts={},order=[],conts=new Set(),houseHits={};let pending=0,doTotal=0;
+  tokens.forEach(t=>{const u=t.toUpperCase();
+    if(isDO(u)){pending++;doTotal++;return}
+    if(isCont(u)){conts.add(u);return}
+    if(isHouse(u)){if(!(u in counts)){counts[u]=0;houseHits[u]=0;order.push(u)}houseHits[u]++;if(pending){counts[u]+=pending;pending=0}}});
+  if(!doTotal)order.forEach(u=>counts[u]=houseHits[u]);
+  else if(pending&&order.length)counts[order[order.length-1]]+=pending;
+  let carrier="";for(const t of tokens){const m=S.carriers.find(c=>c.toLowerCase()===t.toLowerCase());if(m){carrier=m;break}}
+  let sheetSkids=null,units=null;
+  for(let i=0;i<tokens.length;i++){if(/^skids?$/i.test(tokens[i])&&i>0){sheetSkids=n(tokens[i-1].replace(/,/g,""));if(i>1)units=tokens[i-2];break}
+    const m=tokens[i].match(/^([\d,]+)\s*skids?$/i);if(m){sheetSkids=n(m[1].replace(/,/g,""));if(i>0)units=tokens[i-1];break}}
+  return{carrier,containers:[...conts],houses:order.map(no=>({no,skids:counts[no]})),sheetSkids,units};
+}
+function containerSummary(r){const tot=r.houses.reduce((a,h)=>a+h.skids,0);
+  const match=r.sheetSkids==null?"":(r.sheetSkids===tot?` <span class="pill good">matches ${r.sheetSkids} on sheet</span>`:` <span class="pill bad">sheet says ${r.sheetSkids}</span>`);
+  return `<b>Last container read:</b> ${esc(r.carrier||"carrier not found")} · ${esc(r.containers.join(", ")||"no container #")}<br>`+
+    r.houses.map(h=>`${esc(h.no)}: ${h.skids} skids`).join("<br>")+match+(r.units&&/^[\d,]+$/.test(r.units)?`<br>${esc(r.units)} units`:"")+
+    (r.carrier?"":`<br><span style="color:var(--bad)">Pick the carrier on the new truck. Add it in Settings if it's missing.</span>`)}
+function renderEOD(v){const E=S.eod;
+  const truckOpts=E.trucks.map((t,i)=>`<option value="${i+1}">${esc(tkName(t,i))}</option>`).join("");
+  v.innerHTML=`<h2>EOD report</h2><p class="sub">List the trucks, add the HAWBs, and the email writes itself. Type times without the colon: 1817 = 18:17.</p>
+   <label class="f">Date<input type="date" id="edate" value="${esc(E.date)}"></label>
+   <div class="sec">1 · Trucks</div><div class="stack">
+   ${E.trucks.map((t,i)=>`<div class="card tk" style="--tk:${tkColor(i)}"><div class="row"><span class="tkb">Truck ${i+1}</span><span class="note">${t.cont?"Container":t.c?"Local delivery":""}</span><span style="flex:1"></span>${E.trucks.length>1?`<button class="x" data-rmt="${i}" aria-label="Remove truck ${i+1}">×</button>`:""}</div>
+     <div class="row" style="margin-top:6px"><label class="f">Carrier<select data-t="${i}" data-f="c"><option value="">Choose…</option>${S.carriers.map(c=>`<option ${c===t.c?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
+     <label class="f" style="max-width:120px">Transfer time<input class="num" inputmode="numeric" data-t="${i}" data-f="t" value="${esc(t.t)}" placeholder="1817"></label></div>
+     <label class="row" style="margin-top:8px;gap:10px"><input type="checkbox" data-t="${i}" data-f="cont" ${t.cont?"checked":""} style="width:24px;min-height:24px"> Container</label>
+     <div class="note" id="tt${i}"></div></div>`).join("")}</div>
+   <button class="btn ghost" id="addT" style="margin-top:10px">+ Add truck</button>
+   <div class="sec">2 · HAWBs</div>
+   <div class="card"><label class="f">Paste HAWBs, one per line. Pallet qty next to each is picked up too.<textarea id="paste" rows="4" placeholder="USK26100584   2&#10;USK26100585   2"></textarea></label>
+     <div class="row" style="margin-top:8px"><label class="f" style="max-width:150px">Put them on<select id="pasteTruck">${truckOpts}</select></label><button class="btn" id="addH" style="align-self:flex-end">Add HAWBs</button></div></div>
+   <div class="card" style="margin-top:10px"><label class="f">Or paste container paperwork (the whole sheet, as copied from the email)<textarea id="cpaste" rows="3" placeholder="Carrier, HQ DO, Material, Qty, Skid #, IB DO, Master/House No., Container No. …"></textarea></label>
+     <div class="row" style="margin-top:8px"><button class="btn" id="readC">Read container</button></div><div class="note" id="cres" style="margin-top:8px"></div></div>
+   <div class="stack" style="margin-top:10px">
+   ${E.hawbs.map((h,i)=>{const ti=n(h.tr)-1,t=E.trucks[ti];return `<div class="card tk" style="--tk:${t?tkColor(ti):"var(--line)"}">
+     <div class="tkline">${t?`<span class="tkb" style="font-size:13px;padding:1px 8px">Truck ${ti+1}</span> ${esc((t.c||"No carrier")+(t.cont?" · Container":" · Local"))}`:"<span style='color:var(--bad)'>Pick a truck</span>"}</div><div class="hawb-head"><input data-hw="${i}" data-f="h" value="${esc(h.h)}" aria-label="HAWB"><button class="x" data-rmh="${i}" aria-label="Remove HAWB">×</button></div>
+     <div class="hawb"><label class="f">Pallets<input class="num" inputmode="numeric" data-hw="${i}" data-f="q" value="${esc(h.q)}"></label>
+     <label class="f">Truck<select data-hw="${i}" data-f="tr">${n(h.tr)?"":'<option value="" selected>Choose…</option>'}${E.trucks.map((t,j)=>`<option value="${j+1}" ${n(h.tr)===j+1?"selected":""}>${esc(tkName(t,j))}</option>`).join("")}</select></label>
+     <label class="f">GR time<input class="num" inputmode="numeric" data-hw="${i}" data-f="gr" value="${esc(h.gr)}" placeholder="1856"></label>
+     <label class="f">Received by<input data-hw="${i}" data-f="rb" value="${esc(h.rb)}" placeholder="Name/Name"></label>
+     <label class="f wide">Notes (adds a line to the email)<input data-hw="${i}" data-f="n" value="${esc(h.n)}"></label></div>
+     <div class="note" id="hw${i}"></div></div>`}).join("")}</div>
+   ${E.hawbs.length?"":`<p class="note">No HAWBs yet. Paste a list above.</p>`}
+   <div class="sec">3 · Email numbers</div>
+   <div class="card stack"><label class="f">Pallets put away today<input class="num" inputmode="numeric" id="eput" value="${esc(E.put)}"></label>
+     <label class="f">Expected tomorrow from ${esc(S.carriers[0]||"Carrier 1")}<input class="num" inputmode="numeric" id="eexpA" value="${esc(E.expA)}"></label>
+     <label class="f">Container pallets expected tomorrow<input class="num" inputmode="numeric" id="eexpC" value="${esc(E.expC)}"></label></div>
+   <div class="sec">4 · Send</div>
+   <div class="card"><pre class="email" id="email"></pre><div style="margin-top:10px"><button class="btn" id="copyE">Copy email</button></div></div>
+   <div class="card" style="margin-top:10px"><b>SharePoint rows</b><p class="note">Same column order as the HAWB sheet. Paste only into empty rows below the last entry, never over the total row.</p><div><button class="btn ghost" id="copyS">Copy SharePoint rows</button></div></div>
+   <div class="row" style="margin-top:16px"><button class="btn warn" id="eclr">Clear EOD for a new day</button></div>`;
+  $("#edate").oninput=e=>{E.date=e.target.value;save()};
+  v.querySelectorAll("[data-t]").forEach(el=>el.addEventListener(el.type==="checkbox"||el.tagName==="SELECT"?"change":"input",e=>{const i=+e.target.dataset.t,f=e.target.dataset.f;E.trucks[i][f]=e.target.type==="checkbox"?e.target.checked:e.target.value;save();if(f==="c"||f==="cont")render();else updEOD()}));
+  v.querySelectorAll("[data-hw]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",e=>{const i=+e.target.dataset.hw;E.hawbs[i][e.target.dataset.f]=e.target.value;save();updEOD()}));
+  v.querySelectorAll("[data-rmt]").forEach(b=>b.onclick=()=>{const i=+b.dataset.rmt;E.trucks.splice(i,1);E.hawbs.forEach(h=>{const t=n(h.tr);if(t===i+1)h.tr="";else if(t>i+1)h.tr=String(t-1)});save();render()});
+  v.querySelectorAll("[data-rmh]").forEach(b=>b.onclick=()=>{E.hawbs.splice(+b.dataset.rmh,1);save();render()});
+  $("#addT").onclick=()=>{E.trucks.push({c:"",cont:false,t:""});save();render()};
+  $("#addH").onclick=()=>{
+    /* each line: HAWB, optionally followed by pallet qty (tab, comma or spaces between) */
+    const list=$("#paste").value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(/\t|,|\s{2,}|\s+(?=\d+$)/).map(s=>s.trim()).filter(Boolean);
+      return{h:p[0],q:(p[1]&&/^\d+(\.\d+)?$/.test(p[1]))?p[1]:""}});
+    if(!list.length){toast("Paste at least one HAWB first");return}
+    const tr=$("#pasteTruck").value;list.forEach(x=>E.hawbs.push({h:x.h,q:x.q,tr,gr:"",rb:"",n:""}));save();render();toast(`Added ${list.length} HAWB${list.length>1?"s":""}`)};
+  $("#readC").onclick=()=>{const r=parseContainer($("#cpaste").value);
+    if(!r.houses.length){toast("Couldn't find a Master/House number in that text");return}
+    let ti=E.trucks.findIndex((t,i)=>!t.c&&!t.t&&!E.hawbs.some(h=>n(h.tr)===i+1));
+    if(ti<0){E.trucks.push({c:"",cont:true,t:""});ti=E.trucks.length-1}
+    E.trucks[ti]={c:r.carrier||"",cont:true,t:""};const tr=String(ti+1);
+    r.houses.forEach(h=>E.hawbs.push({h:h.no,q:String(h.skids),tr,gr:"",rb:"",n:""}));
+    lastContainer=r;save();render();toast("Container added as Truck "+tr)};
+  if(lastContainer)$("#cres").innerHTML=containerSummary(lastContainer);
+  [["eput","put"],["eexpA","expA"],["eexpC","expC"]].forEach(([id,f])=>$("#"+id).oninput=e=>{E[f]=e.target.value;save();updEOD()});
+  $("#copyE").onclick=e=>copyText(emailText(),e.target);
+  $("#copyS").onclick=e=>copyText(spRows(),e.target);
+  $("#eclr").onclick=e=>armClear(e.target,()=>{S.eod=JSON.parse(JSON.stringify(DEF.eod));save();render();toast("EOD cleared")});
+  updEOD();
+}
+function updEOD(){const E=S.eod;
+  E.trucks.forEach((t,i)=>{const el=$("#tt"+i);if(!el)return;const p=parseTime(t.t);el.textContent=p==="?"?"That time doesn't look right":p?`Transfer ${p}`:"";el.style.color=p==="?"?"var(--bad)":""});
+  E.hawbs.forEach((h,i)=>{const el=$("#hw"+i);if(!el)return;const g=parseTime(h.gr);const t=E.trucks[n(h.tr)-1];
+    el.textContent=g==="?"?"GR time doesn't look right":[t&&t.t&&parseTime(t.t)!=="?"?"Transfer "+parseTime(t.t):"",g?"GR "+g:"Not GR'd yet"].filter(Boolean).join(" · ");el.style.color=g==="?"?"var(--bad)":""});
+  $("#email").textContent=emailText()}
+
+/* ---------- SETTINGS ---------- */
+function renderSettings(v){
+  v.innerHTML=`<h2>Settings</h2><p class="sub">Everything you enter is kept in this phone's browser only. Nothing is sent to anyone.</p>
+   <div class="sec">Carriers</div><div class="card"><label class="f">One per line. The first one is used for "expected tomorrow" in the EOD email.<textarea id="scar" rows="6">${esc(S.carriers.join("\n"))}</textarea></label></div>
+   <div class="sec">Morning areas</div><div class="card"><label class="f">One per line, in the order you walk them.<textarea id="sarea" rows="10">${esc(S.areas.join("\n"))}</textarea></label></div>
+   <div class="row" style="margin-top:12px"><button class="btn" id="ssave">Save settings</button><button class="btn ghost" id="sback">Back</button></div>
+   <div class="sec">Reset</div><div class="card"><p class="note" style="margin-top:0">Clears every tab, the settings and the safety calendar from this phone.</p><button class="btn warn" id="sreset">Erase everything</button></div>`;
+  $("#ssave").onclick=()=>{const c=$("#scar").value.split("\n").map(s=>s.trim()).filter(Boolean),a=$("#sarea").value.split("\n").map(s=>s.trim()).filter(Boolean);
+    if(!c.length){toast("Add at least one carrier");return}
+    const old={};S.areas.forEach((x,i)=>old[x]=S.morning[i]);const nm={};a.forEach((x,i)=>{if(old[x])nm[i]=old[x]});
+    S.carriers=c;S.areas=a;S.morning=nm;save();toast("Settings saved")};
+  $("#sback").onclick=()=>go("safety");
+  $("#sreset").onclick=e=>armClear(e.target,async()=>{S=JSON.parse(JSON.stringify(DEF));save();calImg=null;calURL=null;await idbPut("cal",null);go("safety");toast("Everything erased")});
+}
+
+/* ---------- boot ---------- */
+(async function(){
+  setSaveState();
+  const url=await idbGet("cal");
+  if(url){try{calURL=url;calImg=await loadImage(url)}catch(e){calImg=null}}
+  go(S.tab||"safety");
+})();
+})();
+</script>
+
+</body></html>
